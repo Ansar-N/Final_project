@@ -1,0 +1,29 @@
+import speech_recognition as sr
+
+from googletrans import Translator
+
+from gtts import gTTS
+
+from playsound import playsound
+
+recognizer = sr. Recognizer()
+
+with sr.Microphone() as source:
+
+print("Speak now")
+
+voice = recognizer.listen(source)
+
+listen = recognizer.recognize_google(voice, language="en”)
+
+translator = Translator()
+
+translate translator.translate(listen, dest="fr")
+
+print(translate.text)
+
+converted_audio gTTS(translate.text, lang="fr")
+
+converted_audio.save("hello.mp3")
+
+playsound("hello.mp3")
