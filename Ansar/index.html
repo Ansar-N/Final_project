@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Audio Translator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            padding: 20px;
+        }
+        .result-container {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real-time Audio Translator</h1>
+        <button id="start-record-btn" class="btn btn-primary">Start Recording</button>
+        <button id="stop-record-btn" class="btn btn-danger" style="display: none;">Stop Recording</button>
+
+        <div class="result-container" id="result" style="display: none;">
+            <h3>Transcription:</h3>
+            <p id="transcription"></p>
+            <h3>Translated Text:</h3>
+            <p id="translated"></p>
+        </div>
+
+        <div id="error-message" style="color: red; display: none;"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        let mediaRecorder;
+        const audioChunks = [];
+
+        document.getElementById('start-record-btn').addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.start();
+            $('#start-record-btn').hide();
+            $('#stop-record-btn').show();
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio', audioBlob);
+
+                $.ajax({
+                    url: '/upload', // Endpoint to upload the audio
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        if (response.transcription && response.translated) {
+                            $('#transcription').text(response.transcription);
+                            $('#translated').text(response.translated);
+                            $('#result').show();
+                            $('#error-message').hide();
+                        } else if (response.error) {
+                            $('#error-message').text(response.error).show();
+                            $('#result').hide();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#error-message').text("An error occurred. Please try again.").show();
+                        $('#result').hide();
+                    }
+                });
+            };
+        });
+
+        document.getElementById('stop-record-btn').addEventListener('click', () => {
+            mediaRecorder.stop();
+            $('#start-record-btn').show();
+            $('#stop-record-btn').hide();
+        });
+    </script>
+</body>
+</html>
