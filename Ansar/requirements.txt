@@ -3,3 +3,4 @@ gTTS
 pyaudio
 googletrans==4.0.0-rc1
 playsound==1.2.2
+flask
